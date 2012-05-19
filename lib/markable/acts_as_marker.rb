@@ -5,11 +5,11 @@ module Markable
     module ClassMethods
       def acts_as_marker(options = {})
         Markable.set_models
-        class_eval {
+        class_eval do
           class << self
             attr_accessor :marker_name
           end
-        }
+        end
         self.marker_name = self.name.downcase.to_sym
 
         class_eval do
@@ -21,8 +21,8 @@ module Markable
     end
 
     module MarkerInstanceMethods
-      def method_missing( method_sym, *args )
-        Markable.models.each { |model_name|
+      def method_missing(method_sym, *args)
+        Markable.models.each do |model_name|
           if method_sym.to_s =~ Regexp.new("^[\\w_]+_#{model_name.downcase.pluralize}$") ||
               method_sym.to_s =~ Regexp.new("^#{model_name.downcase.pluralize}_marked_as(_[\\w_]+)?$")
             model_name.constantize # ping model
@@ -30,27 +30,26 @@ module Markable
               return self.method(method_sym).call(*args) # call this method
             end
           end
-        }
+        end
         super
       rescue
         super
       end
 
-      def set_mark mark, markables
+      def set_mark(mark, markables)
         Array.wrap(markables).each do |markable|
           Markable.can_mark_or_raise? self, markable, mark
           markable.mark_as mark, self
         end
       end
 
-      def remove_mark mark, markables
+      def remove_mark(mark, markables)
         Markable.can_mark_or_raise? self, markables, mark
         Array.wrap(markables).each do |markable|
           markable.unmark mark, :by => self
         end
       end
     end
-
   end
 end
 

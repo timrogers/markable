@@ -232,4 +232,18 @@ class ActsAsMarkableTest < ActiveSupport::TestCase
     assert_equal Food.marked_as_favorite, [f1, f2]
     assert_equal Food.marked_as_favorite.count.count, 2
   end
+
+  test "ability to call markable_as with few arguments" do
+    u1 = get(User, 1)
+    c1 = get(Car, 1)
+    c1.users_have_marked_as_hated << [u1]
+    assert_equal Car.marked_as_hated, [c1]
+  end
+
+  test "ability to call markable_as with array" do
+    u1 = get(User, 1)
+    c1 = get(City, 1)
+    c1.users_have_marked_as_hated << [u1]
+    assert_equal City.marked_as_hated, [c1]
+  end
 end

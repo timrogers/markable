@@ -72,6 +72,8 @@ As you wish! Just a little change to your Food model
 ``` ruby
 class Food < ActiveRecord::Base
   markable_as [ :hated, :favorite ]
+  # or
+  markable_as :hated, :favorite
 end
 ```
 

@@ -3,7 +3,10 @@ module Markable
     extend ActiveSupport::Concern
 
     module ClassMethods
-      def markable_as(marks, options = {})
+      def markable_as(*args)
+        options = args.extract_options!
+        marks   = args.flatten
+
         Markable.set_models
 
         class_eval do

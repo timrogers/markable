@@ -246,4 +246,17 @@ class ActsAsMarkableTest < ActiveSupport::TestCase
     c1.users_have_marked_as_hated << [u1]
     assert_equal City.marked_as_hated, [c1]
   end
+
+  # Lifecycle
+
+  test "marks are deleted when markable is destroyed" do
+    u1 = get(User)
+    f1 = get(Food)
+    assert_difference "u1.marker_marks.count" do
+      f1.mark_as :favorite, u1
+    end
+    assert_difference "u1.marker_marks.count", -1 do
+      f1.destroy
+    end
+  end
 end

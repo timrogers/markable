@@ -1,4 +1,6 @@
+require 'rake'
 require 'models/mark'
+load 'tasks/markable.rake'
 
 
 module Markable

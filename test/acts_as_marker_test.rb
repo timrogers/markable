@@ -162,4 +162,17 @@ class ActsAsMarkerTest < ActiveSupport::TestCase
       f1.favorite_foods.delete f2
     }
   end
+
+  # Lifecycle
+
+  test "marks are deleted when marker is destroyed" do
+    u1 = get(User)
+    f1 = get(Food)
+    assert_difference "f1.markable_marks.count" do
+      u1.set_mark :favorite, f1
+    end
+    assert_difference "f1.markable_marks.count", -1 do
+      u1.destroy
+    end
+  end
 end

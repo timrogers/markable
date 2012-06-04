@@ -13,7 +13,7 @@ module Markable
         self.marker_name = self.name.downcase.to_sym
 
         class_eval do
-          has_many :marker_marks, :class_name => 'Markable::Mark', :as => :marker
+          has_many :marker_marks, :class_name => 'Markable::Mark', :as => :marker, :dependent => :delete_all
           include Markable::ActsAsMarker::MarkerInstanceMethods
         end
         Markable.add_marker self

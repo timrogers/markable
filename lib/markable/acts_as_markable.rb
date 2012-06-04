@@ -27,7 +27,7 @@ module Markable
         end
 
         class_eval do
-          has_many :markable_marks, :class_name => 'Markable::Mark', :as => :markable
+          has_many :markable_marks, :class_name => 'Markable::Mark', :as => :markable, :dependent => :delete_all
           include Markable::ActsAsMarkable::MarkableInstanceMethods
 
           def self.marked_as(mark, options = {})

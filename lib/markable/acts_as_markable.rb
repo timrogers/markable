@@ -33,7 +33,7 @@ module Markable
           def self.marked_as(mark, options = {})
             if options[:by].present?
               result = self.joins(:markable_marks).where( :marks => {
-                :mark => mark, :marker_id => options[:by].id, :marker_type => options[:by].class.name
+                :mark => mark.to_s, :marker_id => options[:by].id, :marker_type => options[:by].class.name
               })
               markable = self
               result.class_eval do
@@ -47,7 +47,7 @@ module Markable
                 end
               end
             else
-              result = self.joins(:markable_marks).where( :marks => { :mark => mark } ).group("#{self.table_name}.id")
+              result = self.joins(:markable_marks).where( :marks => { :mark => mark.to_s } ).group("#{self.table_name}.id")
             end
             result
           end
@@ -94,7 +94,7 @@ module Markable
             :markable_type => self.class.name,
             :marker_id => marker.id,
             :marker_type => marker.class.name,
-            :mark => mark
+            :mark => mark.to_s
           }
           Markable::Mark.create(params) unless Markable::Mark.exists? params
         end
@@ -107,7 +107,7 @@ module Markable
         params = {
           :markable_id => self.id,
           :markable_type => self.class.name,
-          :mark => mark
+          :mark => mark.to_s
         }
         if options[:by].present?
           params[:marker_id] = options[:by].id
@@ -125,7 +125,7 @@ module Markable
               :markable_type => self.class.name,
               :marker_id => marker.id,
               :marker_type => marker.class.name,
-              :mark => mark
+              :mark => mark.to_s
             }
             Markable::Mark.delete_all(params)
           end
@@ -133,7 +133,7 @@ module Markable
           params = {
             :markable_id => self.id,
             :markable_type => self.class.name,
-            :mark => mark
+            :mark => mark.to_s
           }
           Markable::Mark.delete_all(params)
         end
@@ -141,7 +141,7 @@ module Markable
 
       def have_marked_as_by(mark, target)
         result = target.joins(:marker_marks).where( :marks => {
-          :mark => mark, :markable_id => self.id, :markable_type => self.class.name
+          :mark => mark.to_s, :markable_id => self.id, :markable_type => self.class.name
         })
         markable = self
         result.class_eval do

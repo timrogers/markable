@@ -111,15 +111,13 @@ module Markable
 
       def marked_as?(mark, options = {})
         by = options[:by]
-        if by.present?
-          Markable.can_mark_or_raise?(by, self, mark)
-        end
         params = {
           :markable_id => self.id,
           :markable_type => self.class.name,
           :mark => mark.to_s
         }
         if by.present?
+          Markable.can_mark_or_raise?(by, self, mark)
           params[:marker_id] = by.id
           params[:marker_type] = by.class.name
         end

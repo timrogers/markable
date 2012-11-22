@@ -16,7 +16,7 @@ module Markable
           end
         end
 
-        marks = Array.wrap(marks).map!{|i| i.to_sym }
+        marks = Array.wrap(marks).map!(&:to_sym)
 
         markers = by.present? ? Array.wrap(by) : :all
 
@@ -28,28 +28,35 @@ module Markable
         end
 
         class_eval do
-          has_many :markable_marks, :class_name => 'Markable::Mark', :as => :markable, :dependent => :delete_all
+          has_many :markable_marks,
+                   :class_name => 'Markable::Mark',
+                   :as => :markable,
+                   :dependent => :delete_all
           include Markable::ActsAsMarkable::MarkableInstanceMethods
 
           def self.marked_as(mark, options = {})
             by = options[:by]
             if by.present?
-              result = self.joins(:markable_marks).where( :marks => {
-                :mark => mark.to_s, :marker_id => by.id, :marker_type => by.class.name
+              result = self.joins(:markable_marks).where({
+                :marks => {
+                  :mark => mark.to_s,
+                  :marker_id => by.id,
+                  :marker_type => by.class.name
+                }
               })
               markable = self
               result.class_eval do
                 define_method :<< do |object|
-                  by.set_mark mark, object
+                  by.set_mark(mark, object)
                   self
                 end
                 define_method :delete do |markable|
-                  by.remove_mark mark, markable
+                  by.remove_mark(mark, markable)
                   self
                 end
               end
             else
-              result = self.joins(:markable_marks).where( :marks => { :mark => mark.to_s } ).group("#{self.table_name}.id")
+              result = self.joins(:markable_marks).where(:marks => { :mark => mark.to_s }).group("#{self.table_name}.id")
             end
             result
           end
@@ -57,17 +64,17 @@ module Markable
 
         self.__markable_marks.each do |mark, o|
           class_eval %(
-            def self.marked_as_#{mark} options = {}
-              self.marked_as :#{mark}, options
+            def self.marked_as_#{mark}(options = {})
+              self.marked_as(:#{mark}, options)
             end
 
-            def marked_as_#{mark}? options = {}
-              self.marked_as? :#{mark}, options
+            def marked_as_#{mark}?(options = {})
+              self.marked_as?(:#{mark}, options)
             end
           )
         end
 
-        Markable.add_markable self
+        Markable.add_markable(self)
       end
     end
 
@@ -78,7 +85,7 @@ module Markable
           if method_sym.to_s =~ Regexp.new("^#{model_name.downcase.pluralize}_have_marked_as(_[\\w_]+)?$")
             model_name.constantize # ping model
 
-            if self.methods.include? method_sym # method has appear
+            if self.methods.include?(method_sym) # method has appear
               return self.method(method_sym).call(*args) # call this method
             end
           end
@@ -90,7 +97,7 @@ module Markable
 
       def mark_as(mark, markers)
         Array.wrap(markers).each do |marker|
-          Markable.can_mark_or_raise? marker, self, mark
+          Markable.can_mark_or_raise?(marker, self, mark)
           params = {
             :markable_id => self.id,
             :markable_type => self.class.name,
@@ -98,14 +105,14 @@ module Markable
             :marker_type => marker.class.name,
             :mark => mark.to_s
           }
-          Markable::Mark.create(params) unless Markable::Mark.exists? params
+          Markable::Mark.create(params) unless Markable::Mark.exists?(params)
         end
       end
 
       def marked_as?(mark, options = {})
         by = options[:by]
         if by.present?
-          Markable.can_mark_or_raise? by, self, mark
+          Markable.can_mark_or_raise?(by, self, mark)
         end
         params = {
           :markable_id => self.id,
@@ -116,49 +123,51 @@ module Markable
           params[:marker_id] = by.id
           params[:marker_type] = by.class.name
         end
-        Markable::Mark.exists? params
+        Markable::Mark.exists?(params)
       end
 
       def unmark(mark, options = {})
         by = options[:by]
         if by.present?
-          Markable.can_mark_or_raise? by, self, mark
+          Markable.can_mark_or_raise?(by, self, mark)
           Array.wrap(by).each do |marker|
-            params = {
+            Markable::Mark.delete_all({
               :markable_id => self.id,
               :markable_type => self.class.name,
               :marker_id => marker.id,
               :marker_type => marker.class.name,
               :mark => mark.to_s
-            }
-            Markable::Mark.delete_all(params)
+            })
           end
         else
-          params = {
+          Markable::Mark.delete_all({
             :markable_id => self.id,
             :markable_type => self.class.name,
             :mark => mark.to_s
-          }
-          Markable::Mark.delete_all(params)
+          })
         end
       end
 
       def have_marked_as_by(mark, target)
-        result = target.joins(:marker_marks).where( :marks => {
-          :mark => mark.to_s, :markable_id => self.id, :markable_type => self.class.name
+        result = target.joins(:marker_marks).where({
+          :marks => {
+            :mark => mark.to_s,
+            :markable_id => self.id,
+            :markable_type => self.class.name
+          }
         })
         markable = self
         result.class_eval do
           define_method :<< do |markers|
             Array.wrap(markers).each do |marker|
-              marker.set_mark mark, markable
+              marker.set_mark(mark, markable)
             end
             self
           end
           define_method :delete do |markers|
-            Markable.can_mark_or_raise? markers, markable, mark
+            Markable.can_mark_or_raise?(markers, markable, mark)
             Array.wrap(markers).each do |marker|
-              marker.remove_mark mark, markable
+              marker.remove_mark(mark, markable)
             end
             self
           end
@@ -169,4 +178,4 @@ module Markable
   end
 end
 
-ActiveRecord::Base.send :include, Markable::ActsAsMarkable
+ActiveRecord::Base.send(:include, Markable::ActsAsMarkable)

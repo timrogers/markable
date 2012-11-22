@@ -6,6 +6,7 @@ module Markable
       def markable_as(*args)
         options = args.extract_options!
         marks   = args.flatten
+        by      = options[:by]
 
         Markable.set_models
 
@@ -17,7 +18,7 @@ module Markable
 
         marks = Array.wrap(marks).map!{|i| i.to_sym }
 
-        markers = options[:by].present? ? Array.wrap(options[:by]) : :all
+        markers = by.present? ? Array.wrap(by) : :all
 
         self.__markable_marks ||= {}
         marks.each do |mark|
@@ -31,18 +32,19 @@ module Markable
           include Markable::ActsAsMarkable::MarkableInstanceMethods
 
           def self.marked_as(mark, options = {})
-            if options[:by].present?
+            by = options[:by]
+            if by.present?
               result = self.joins(:markable_marks).where( :marks => {
-                :mark => mark.to_s, :marker_id => options[:by].id, :marker_type => options[:by].class.name
+                :mark => mark.to_s, :marker_id => by.id, :marker_type => by.class.name
               })
               markable = self
               result.class_eval do
                 define_method :<< do |object|
-                  options[:by].set_mark mark, object
+                  by.set_mark mark, object
                   self
                 end
                 define_method :delete do |markable|
-                  options[:by].remove_mark mark, markable
+                  by.remove_mark mark, markable
                   self
                 end
               end
@@ -101,25 +103,27 @@ module Markable
       end
 
       def marked_as?(mark, options = {})
-        if options[:by].present?
-          Markable.can_mark_or_raise? options[:by], self, mark
+        by = options[:by]
+        if by.present?
+          Markable.can_mark_or_raise? by, self, mark
         end
         params = {
           :markable_id => self.id,
           :markable_type => self.class.name,
           :mark => mark.to_s
         }
-        if options[:by].present?
-          params[:marker_id] = options[:by].id
-          params[:marker_type] = options[:by].class.name
+        if by.present?
+          params[:marker_id] = by.id
+          params[:marker_type] = by.class.name
         end
         Markable::Mark.exists? params
       end
 
       def unmark(mark, options = {})
-        if options[:by].present?
-          Markable.can_mark_or_raise? options[:by], self, mark
-          Array.wrap(options[:by]).each do |marker|
+        by = options[:by]
+        if by.present?
+          Markable.can_mark_or_raise? by, self, mark
+          Array.wrap(by).each do |marker|
             params = {
               :markable_id => self.id,
               :markable_type => self.class.name,

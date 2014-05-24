@@ -186,7 +186,9 @@ user.favorite_foods.delete [food1, food2]
 
 # Check
 food.marked_as? :favorite
+food.marked_as? :favorite, :by => user1
 food.marked_as_favorite?
+food.marked_as_favorite? :by => user1
 ```
 
 ##Usage examples
